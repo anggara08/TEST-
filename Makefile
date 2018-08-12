@@ -1,14 +1,18 @@
 VERSION = 3
 PATCHLEVEL = 10
-SUBLEVEL = 105
+SUBLEVEL = 61
 EXTRAVERSION =
 NAME = TOSSUG Baby Fish
 
 #TOOLCHAIN_DIR = $(CURDIR)/toolchain/aarch64-linux-android-5.3-kernel/bin/aarch64-
-TOOLCHAIN_DIR #TOOLCHAIN_DIR=$(CURDIR)/toolchain/aarch64-linux-android-5.3-kernel/bin/aarch64-linux-android-
+TOOLCHAIN_DIR =/home/anggara08/aarch64-linux-android-5.3-kernel/bin/aarch64-
 
 ifdef CONFIG_WITH_CCACHE
 ccache := ccache
+endif
+
+ifdef CONFIG_WITH_GRAPHITE
+GRAPHITE = -fgraphite-identity -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block -floop-flatten -floop-nest-optimize -fgraphite
 endif
 
 # *DOCUMENTATION*
@@ -28,7 +32,6 @@ unexport LC_ALL
 LC_COLLATE=C
 LC_NUMERIC=C
 export LC_COLLATE LC_NUMERIC
-unexport GREP_OPTIONS 
 
 # We are using a recursive build, so we need to do a little thinking
 # to get the ordering right.
@@ -253,6 +256,14 @@ HOSTCXX      = $(CCACHE) g++
 else
 HOSTCC       = gcc
 HOSTCXX      = g++
+endif
+ifdef CONFIG_WITH_GRAPHITE
+HOSTCFLAGS   = $(GRAPHITE) -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer -std=gnu89 -floop-nest-optimize
+HOSTCXXFLAGS = $(GRAPHITE) -Ofast
+else
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -Ofast -fomit-frame-pointer -std=gnu89 -floop-nest-optimize
+HOSTCXXFLAGS = -Ofast
+endif
 HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89
 HOSTCXXFLAGS = -O2
 
@@ -339,11 +350,23 @@ include $(srctree)/scripts/Kbuild.include
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
 ifdef CONFIG_WITH_CCACHE
+	ifdef CONFIG_WITH_GRAPHITE
+		CC		= $(CCACHE) $(GRAPHITE) $(CROSS_COMPILE)gcc
 	else
 		CC		= $(CCACHE) $(CROSS_COMPILE)gcc	
+	endif
+else
+	ifdef CONFIG_WITH_GRAPHITE
+		CC		= $(GRAPHITE) $(CROSS_COMPILE)gcc
+	else
+		CC		= $(CROSS_COMPILE)gcc
+	endif
 endif
-CC		= $(CROSS_COMPILE)gcc
+ifdef CONFIG_WITH_GRAPHITE
+CPP		= $(GRAPHITE) $(CC) -E
+else
 CPP		= $(CC) -E
+endif
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
 STRIP		= $(CROSS_COMPILE)strip
@@ -368,11 +391,19 @@ endif
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   =
-AFLAGS_MODULE   =
-LDFLAGS_MODULE  =
-CFLAGS_KERNEL	=
-AFLAGS_KERNEL	=
+ifdef CONFIG_WITH_GRAPHITE
+CFLAGS_MODULE   = $(GRAPHITE) 
+AFLAGS_MODULE   = $(GRAPHITE) 
+LDFLAGS_MODULE  = $(GRAPHITE) 
+CFLAGS_KERNEL	= $(GRAPHITE) -fsingle-precision-constant
+AFLAGS_KERNEL	= $(GRAPHITE) 
+else
+CFLAGS_MODULE   = 
+AFLAGS_MODULE   = 
+LDFLAGS_MODULE  = 
+CFLAGS_KERNEL	= -fsingle-precision-constant
+AFLAGS_KERNEL	= 
+endif
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
 
@@ -395,16 +426,35 @@ LINUXINCLUDE    := \
 
 KBUILD_CPPFLAGS := -D__KERNEL__
 
-KBUILD_CFLAGS   := -w -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-		   -fno-strict-aliasing -fno-common \
+ifdef CONFIG_WITH_GRAPHITE
+KBUILD_CFLAGS   := -DNDEBUG $(GRAPHITE) -w -Wstrict-prototypes -Wno-trigraphs \
+		   -fno-strict-aliasing -finline-functions -fno-common \
 		   -Werror-implicit-function-declaration -fno-pic \
-		   -Wno-format-security -Wno-logical-not-parentheses \
+		   -Wno-format-security -ffast-math \
 		   -fno-delete-null-pointer-checks \
-		   -fno-diagnostics-show-caret -fno-pic \
-		   -Wno-unused-variable \
-		   -mtune=cortex-a57.cortex-a53 \
-		   -std=gnu89
-
+		   -fdiagnostics-show-option \
+		   -pipe  -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
+		   -ftree-loop-distribution -ftree-loop-if-convert -fivopts -fipa-pta -fira-hoist-pressure \
+		   -fmodulo-sched -fmodulo-sched-allow-regmoves \
+		   -fbranch-target-load-optimize -fsingle-precision-constant \
+		   -Werror -Wno-error=unused-variable -Wno-error=unused-function \
+		   -std=gnu89 -Wno-discarded-array-qualifiers -Wno-logical-not-parentheses -Wno-array-bounds -Wno-switch -Wno-unused-variable \
+		   -march=armv8-a+crc -mtune=cortex-a57.cortex-a53
+else
+KBUILD_CFLAGS   := -DNDEBUG -w -Wstrict-prototypes -Wno-trigraphs \
+		   -fno-strict-aliasing -finline-functions -fno-common \
+		   -Werror-implicit-function-declaration -fno-pic \
+		   -Wno-format-security -ffast-math \
+		   -fno-delete-null-pointer-checks \
+		   -fdiagnostics-show-option \
+		   -pipe  -funswitch-loops -fpredictive-commoning -fgcse-after-reload \
+		   -ftree-loop-distribution -ftree-loop-if-convert -fivopts -fipa-pta -fira-hoist-pressure \
+		   -fmodulo-sched -fmodulo-sched-allow-regmoves \
+		   -fbranch-target-load-optimize -fsingle-precision-constant \
+		   -Werror -Wno-error=unused-variable -Wno-error=unused-function \
+		   -std=gnu89 -Wno-discarded-array-qualifiers -Wno-logical-not-parentheses -Wno-array-bounds -Wno-switch -Wno-unused-variable \
+		   -march=armv8-a+crc -mtune=cortex-a57.cortex-a53
+endif
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
@@ -413,7 +463,7 @@ KBUILD_CFLAGS_MODULE  := -DMODULE
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
-KERNELRELEASE = $(shell cat include/config/kernel.release 2> /dev/null)
+KERNELRELEASE = $(VERSION)$(if $(PATCHLEVEL),.$(PATCHLEVEL)$(if $(SUBLEVEL),.$(SUBLEVEL)))$(EXTRAVERSION)$(CONFIG_LOCALVERSION)
 KERNELVERSION = $(VERSION)$(if $(PATCHLEVEL),.$(PATCHLEVEL)$(if $(SUBLEVEL),.$(SUBLEVEL)))$(EXTRAVERSION)
 
 export VERSION PATCHLEVEL SUBLEVEL KERNELRELEASE KERNELVERSION
@@ -604,7 +654,7 @@ all: vmlinux
 ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
 KBUILD_CFLAGS	+= -Os $(call cc-disable-warning,maybe-uninitialized,)
 else
-KBUILD_CFLAGS	+= -O2
+KBUILD_CFLAGS	+= -Ofast $(call cc-disable-warning,maybe-uninitialized,)
 endif
 
 include $(srctree)/arch/$(SRCARCH)/Makefile
@@ -694,12 +744,6 @@ KBUILD_CFLAGS	+= $(call cc-option,-fno-strict-overflow)
 
 # conserve stack if available
 KBUILD_CFLAGS   += $(call cc-option,-fconserve-stack)
-
-# disallow errors like 'EXPORT_GPL(foo);' with missing header
-KBUILD_CFLAGS   += $(call cc-option,-Werror=implicit-int)
-
-# require functions to have arguments in prototypes, not empty 'int foo()'
-KBUILD_CFLAGS   += $(call cc-option,-Werror=strict-prototypes)
 
 # use the deterministic mode of AR if available
 KBUILD_ARFLAGS := $(call ar-option,D)
@@ -1494,4 +1538,3 @@ FORCE:
 # Declare the contents of the .PHONY variable as phony.  We keep that
 # information in a variable so we can use it in if_changed and friends.
 .PHONY: $(PHONY)
-endif
