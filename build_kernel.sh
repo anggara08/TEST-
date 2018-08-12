@@ -14,7 +14,7 @@
 #                                                         		      #
 # Original scripts by halaszk & various sources throughout gitHub             #
 # modified by UpInTheAir for SkyHigh kernels				      #
-# very very slightly modified by The Sickness for his Twisted S6 kernel       #
+# very very slightly modified by The anggara08 for his Twisted S6 kernel       #
 #                                                         		      #
 ###############################################################################
 
@@ -179,15 +179,15 @@ echo "Done"
 echo
 echo "${bldcya}***** Make archives *****${txtrst}"
 
-cp -R ./sickness ${KERNELDIR}/output/$TARGET/
+cp -R ./anggara08 ${KERNELDIR}/output/$TARGET/
 cp -R ./supersu ${KERNELDIR}/output/$TARGET/
 cp -R ./busybox ${KERNELDIR}/output/$TARGET/
-cp ./$TARGET/boot.img ${KERNELDIR}/output/$TARGET/sickness
+cp ./$TARGET/boot.img ${KERNELDIR}/output/$TARGET/anggara08
 cp -R ./system ${KERNELDIR}/output/$TARGET/
 cp -R ./META-INF ${KERNELDIR}/output/$TARGET/
 
 cd ${KERNELDIR}/output/$TARGET
-GETVER=`grep 'S6E_OREO_*v' ${KERNELDIR}/.config | sed 's/.*".//g' | sed 's/-S.*//g'`
+GETVER=`grep 'G928T_OREO_*v' ${KERNELDIR}/.config | sed 's/.*".//g' | sed 's/-S.*//g'`
 
 # Without Clearwater audio mod
 AUDIO=`grep '# CONFIG_SND_SOC_ARIZONA_CONTROL*' ${KERNELDIR}/.config | sed 's/.*".//g' | sed 's/-S.*//g'`
@@ -198,7 +198,7 @@ else
 fi
 
 zip -r SM-$TARGET-$AUDIO-kernel-${GETVER}-`date +[%d-%m-%y]`.zip .
-tar -H ustar -c ${KERNELDIR}/output/$TARGET/sickness/boot.img > SM-$TARGET-$AUDIO-kernel-${GETVER}-`date +[%d-%m-%y]`.tar
+tar -H ustar -c ${KERNELDIR}/output/$TARGET/anggara08/boot.img > SM-$TARGET-$AUDIO-kernel-${GETVER}-`date +[%d-%m-%y]`.tar
 md5sum -t SM-$TARGET-$AUDIO-kernel-${GETVER}-`date +[%d-%m-%y]`.tar >> SM-$TARGET-$AUDIO-kernel-${GETVER}-`date +[%d-%m-%y]`.tar
 mv SM-$TARGET-$AUDIO-kernel-${GETVER}-`date +[%d-%m-%y]`.tar SM-$TARGET-$AUDIO-kernel-${GETVER}-`date +[%d-%m-%y]`.tar.md5
 

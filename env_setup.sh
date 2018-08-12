@@ -67,7 +67,7 @@ export SUB_ARCH=arm64;
 
 # G928T
 if [ "$TARGET" = "G928T" ] ; then
-	export KERNEL_CONFIG="custom-a8xelteskt_defconfig";
+	export KERNEL_CONFIG="custom-exynos7420-a8xelteskt_defconfig";
 fi;
 
 # G925P
