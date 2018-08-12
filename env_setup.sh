@@ -65,9 +65,9 @@ export KCONFIG_NOTIMESTAMP=true
 export ARCH=arm64;
 export SUB_ARCH=arm64;
 
-# G920P
-if [ "$TARGET" = "G92P" ] ; then
-	export KERNEL_CONFIG="custom-zerofltespr_defconfig";
+# G928T
+if [ "$TARGET" = "G928T" ] ; then
+	export KERNEL_CONFIG="custom-a8xelteskt_defconfig";
 fi;
 
 # G925P
